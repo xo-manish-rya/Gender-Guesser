@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instagram Gender Analyzer</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        color: white;
+      }
+
+      .header h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        font-weight: 300;
+      }
+
+      .card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+      }
+
+      .upload-area {
+        border: 3px dashed #667eea;
+        border-radius: 15px;
+        padding: 60px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9ff;
+      }
+
+      .upload-area:hover {
+        border-color: #764ba2;
+        background: #f0f2ff;
+      }
+
+      .upload-area i {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 20px;
+      }
+
+      .upload-area h3 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 1.5rem;
+      }
+
+      .upload-area p {
+        color: #666;
+        margin-bottom: 20px;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-card.male {
+        background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+      }
+      .stat-card.female {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ffe66d 100%);
+      }
+      .stat-card.unknown {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 1rem;
+        opacity: 0.9;
+      }
+
+      .chart-container {
+        height: 300px;
+        margin: 30px 0;
+      }
+
+      .sample-data {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+      }
+
+      th {
+        background: #f8f9ff;
+        font-weight: 600;
+        color: #333;
+      }
+
+      tr:hover {
+        background: #f8f9ff;
+      }
+
+      .gender-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .gender-male {
+        background: #36d1dc;
+        color: white;
+      }
+
+      .gender-female {
+        background: #ff6b6b;
+        color: white;
+      }
+
+      .gender-unknown {
+        background: #667eea;
+        color: white;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 40px;
+      }
+
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .alert {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .alert-error {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+      }
+
+      .alert-success {
+        background: #e8f5e8;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+      }
+
+      .file-info {
+        background: #f8f9ff;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1><i class="fas fa-venus-mars"></i> Instagram Gender Analyzer</h1>
+        <p>Advanced AI-powered gender detection for Instagram profiles</p>
+      </div>
+
+      <div class="card">
+        <div class="alert" id="alert"></div>
+
+        <div class="upload-area" id="uploadArea">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <h3>Upload Your Excel/CSV File</h3>
+          <p>File must contain "username" and "fullnames" columns</p>
+          <input
+            type="file"
+            id="fileInput"
+            accept=".xlsx,.xls,.csv"
+            style="display: none"
+          />
+          <button
+            class="btn"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            <i class="fas fa-file-upload"></i> Choose File
+          </button>
+          <div class="file-info" id="fileInfo"></div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px">
+          <button class="btn" id="analyzeBtn" onclick="analyzeFile()" disabled>
+            <i class="fas fa-chart-pie"></i> Analyze Gender
+          </button>
+        </div>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h3>Analyzing Profiles...</h3>
+        <p>This may take a few moments depending on file size</p>
+      </div>
+
+      <div class="card" id="resultsSection" style="display: none">
+        <h2 style="margin-bottom: 20px; color: #333">Analysis Results</h2>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="chart-container">
+          <canvas id="genderChart"></canvas>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0">
+          <a class="btn" id="downloadBtn">
+            <i class="fas fa-download"></i> Download Results
+          </a>
+        </div>
+
+        <div class="sample-data">
+          <h3 style="margin-bottom: 20px; color: #333">Sample Data</h3>
+          <table id="sampleTable">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Gender</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="sampleTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentFile = null;
+
+      // File input handling
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            currentFile = file;
+            document.getElementById("fileInfo").innerHTML = `
+                    <strong>Selected File:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${(file.size / 1024 / 1024).toFixed(
+                      2
+                    )} MB<br>
+                    <strong>Type:</strong> ${
+                      file.type || file.name.split(".").pop().toUpperCase()
+                    }
+                `;
+            document.getElementById("fileInfo").style.display = "block";
+            document.getElementById("analyzeBtn").disabled = false;
+            showAlert(
+              "File selected successfully! Ready for analysis.",
+              "success"
+            );
+          }
+        });
+
+      // Drag and drop functionality
+      const uploadArea = document.getElementById("uploadArea");
+      uploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = "#764ba2";
+        uploadArea.style.background = "#f0f2ff";
+      });
+
+      uploadArea.addEventListener("dragleave", () => {
+        uploadArea.style.borderColor = "#667eea";
+        uploadArea.style.background = "#f8f9ff";
+      });
+
+      uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (
+          file &&
+          (file.name.endsWith(".xlsx") ||
+            file.name.endsWith(".xls") ||
+            file.name.endsWith(".csv"))
+        ) {
+          document.getElementById("fileInput").files = e.dataTransfer.files;
+          const event = new Event("change");
+          document.getElementById("fileInput").dispatchEvent(event);
+        } else {
+          showAlert("Please upload only Excel or CSV files.", "error");
+        }
+      });
+
+      function showAlert(message, type) {
+        const alert = document.getElementById("alert");
+        alert.textContent = message;
+        alert.className = `alert alert-${type}`;
+        alert.style.display = "block";
+        setTimeout(() => {
+          alert.style.display = "none";
+        }, 5000);
+      }
+
+      async function analyzeFile() {
+        if (!currentFile) {
+          showAlert("Please select a file first.", "error");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", currentFile);
+
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("analyzeBtn").disabled = true;
+
+        try {
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            displayResults(data);
+            showAlert("Analysis completed successfully!", "success");
+          } else {
+            showAlert(
+              data.error || "Analysis failed. Please try again.",
+              "error"
+            );
+          }
+        } catch (error) {
+          showAlert("Network error. Please check your connection.", "error");
+        } finally {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("analyzeBtn").disabled = false;
+        }
+      }
+
+      function displayResults(data) {
+        // Update statistics
+        document.getElementById("statsGrid").innerHTML = `
+                <div class="stat-card male">
+                    <div class="stat-number">${data.stats.male}</div>
+                    <div class="stat-label">Male (${data.stats.male_percentage}%)</div>
+                </div>
+                <div class="stat-card female">
+                    <div class="stat-number">${data.stats.female}</div>
+                    <div class="stat-label">Female (${data.stats.female_percentage}%)</div>
+                </div>
+                <div class="stat-card unknown">
+                    <div class="stat-number">${data.stats.unknown}</div>
+                    <div class="stat-label">Unknown (${data.stats.unknown_percentage}%)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.stats.total}</div>
+                    <div class="stat-label">Total Profiles</div>
+                </div>
+            `;
+
+        // Update chart
+        const ctx = document.getElementById("genderChart").getContext("2d");
+        new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["Male", "Female", "Unknown"],
+            datasets: [
+              {
+                data: [data.stats.male, data.stats.female, data.stats.unknown],
+                backgroundColor: ["#36D1DC", "#FF6B6B", "#667eea"],
+                borderWidth: 2,
+                borderColor: "#fff",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+            },
+          },
+        });
+
+        // Update sample table
+        const tableBody = document.getElementById("sampleTableBody");
+        tableBody.innerHTML = data.sample_data
+          .map(
+            (row) => `
+                <tr>
+                    <td>${row.username || "N/A"}</td>
+                    <td>${row.fullnames || "N/A"}</td>
+                    <td><span class="gender-badge gender-${row.gender}">${
+              row.gender
+            }</span></td>
+                    <td>${(row.confidence * 100).toFixed(1)}%</td>
+                </tr>
+            `
+          )
+          .join("");
+
+        // Update download button
+        document.getElementById("downloadBtn").href = data.download_url;
+
+        // Show results section
+        document.getElementById("resultsSection").style.display = "block";
+      }
+    </script>
+  </body>
+</html>
